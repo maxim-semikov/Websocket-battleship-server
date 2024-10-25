@@ -20,3 +20,24 @@ export const handleCreateRoom = (ws: WebSocket) => {
     roomUsers: [{ name: currentUser?.name!, index: currentUser?.id! }],
   });
 };
+
+export const handleAddUserToRoom = (ws: WebSocket, roomId: string) => {
+  const room = roomsStore.get(roomId);
+  if (!room) {
+    console.error('Room not found!');
+    return;
+  }
+
+  const currentUser = getCurrentUser(ws);
+  const hasUserInRoom = room.roomUsers?.find((roomUser) => roomUser?.index === currentUser?.id);
+
+  if (hasUserInRoom) {
+    console.error('User is already in room!');
+    return;
+  }
+
+  roomsStore.set(roomId, {
+    ...room,
+    roomUsers: [...room.roomUsers, { name: currentUser?.name!, index: currentUser?.id! }],
+  });
+};

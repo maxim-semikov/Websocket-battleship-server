@@ -2,7 +2,11 @@ import WebSocket from 'ws';
 import { Message } from '../types';
 import { parseDataFromClient } from '../helpers';
 import { handleRegistration } from '../controllers/regController';
-import { getUpdatedRoomInfo, handleCreateRoom } from '../controllers/roomController';
+import {
+  getUpdatedRoomInfo,
+  handleAddUserToRoom,
+  handleCreateRoom,
+} from '../controllers/roomController';
 
 export const wsClients = new Set<WebSocket>();
 
@@ -35,6 +39,11 @@ export const messageHandler = (ws: WebSocket) => (rawData: WebSocket.RawData) =>
         handleCreateRoom(ws);
         broadcastUpdatedRoomInfo();
         break;
+      }
+      case 'add_user_to_room': {
+        const dataFromClient = parseDataFromClient(message);
+        handleAddUserToRoom(ws, dataFromClient?.indexRoom);
+        broadcastUpdatedRoomInfo();
       }
     }
   } catch {
