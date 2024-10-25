@@ -23,7 +23,7 @@ export interface Room {
 
 export type ShipType = 'small' | 'medium' | 'large' | 'huge';
 
-interface Position {
+export interface Position {
   x: number;
   y: number;
 }

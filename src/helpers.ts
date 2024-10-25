@@ -9,15 +9,10 @@ export const sendToClient = (ws: WebSocket, message: MessageToClient) => {
   ws.send(JSON.stringify(data));
 };
 
-export function placeShipOnMap(
-  gameBoardMap: Map<string, Ship>,
-  ship: Ship,
-  x: number,
-  y: number,
-  vertical: boolean,
-) {
-  for (let i = 0; i < ship.size; i++) {
-    const key = vertical ? `${x + i}:${y}` : `${x}:${y + i}`;
+export function placeShipOnMap(gameBoardMap: Map<string, Ship>, ship: Ship) {
+  const { x, y } = ship.position;
+  for (let i = 0; i < ship.length; i++) {
+    const key = ship.direction ? `${x + i}:${y}` : `${x}:${y + i}`;
     gameBoardMap.set(key, ship);
   }
 }

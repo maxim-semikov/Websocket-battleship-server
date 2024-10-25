@@ -1,12 +1,19 @@
-import { Game, GameId, ShipType } from './types';
+import { ClientShipData, Game, GameId, Position, ShipType } from './types';
 
 export const gameStore = new Map<GameId, Game>();
 
 export class Ship {
   hits = 0;
   type: ShipType;
-  constructor(type: ShipType, public size: number) {
-    this.type = type;
+  position: Position;
+  direction: boolean;
+  length: number;
+
+  constructor(ship: ClientShipData) {
+    this.type = ship.type;
+    this.position = ship.position;
+    this.direction = ship.direction;
+    this.length = ship.length;
   }
 
   hit() {
@@ -14,6 +21,6 @@ export class Ship {
   }
 
   isSunk() {
-    return this.hits === this.size;
+    return this.hits === this.length;
   }
 }
