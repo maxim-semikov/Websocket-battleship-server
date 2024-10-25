@@ -1,6 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as http from 'http';
+import fs from 'node:fs';
+import path from 'node:path';
+import http from 'node:http';
 
 export const httpServer = http.createServer(function (req, res) {
     const __dirname = path.resolve(path.dirname(''));
