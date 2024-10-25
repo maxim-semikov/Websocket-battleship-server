@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 import { Message } from '../types';
 import { parseDataFromClient } from '../helpers';
 import { handleRegistration } from '../controllers/regController';
-import { getUpdatedRoomInfo } from '../controllers/roomController';
+import { getUpdatedRoomInfo, handleCreateRoom } from '../controllers/roomController';
 
 export const wsClients = new Set<WebSocket>();
 
@@ -14,6 +14,10 @@ function broadcastToAllClients(data: string) {
   }
 }
 
+const broadcastUpdatedRoomInfo = () => {
+  broadcastToAllClients(getUpdatedRoomInfo());
+};
+
 export const messageHandler = (ws: WebSocket) => (rawData: WebSocket.RawData) => {
   try {
     wsClients.add(ws);
@@ -24,7 +28,12 @@ export const messageHandler = (ws: WebSocket) => (rawData: WebSocket.RawData) =>
       case 'reg': {
         const dataFromClient = parseDataFromClient(message);
         handleRegistration(ws, dataFromClient);
-        broadcastToAllClients(getUpdatedRoomInfo());
+        broadcastUpdatedRoomInfo();
+        break;
+      }
+      case 'create_room': {
+        handleCreateRoom(ws);
+        broadcastUpdatedRoomInfo();
         break;
       }
     }
