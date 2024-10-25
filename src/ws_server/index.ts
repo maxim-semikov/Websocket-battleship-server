@@ -7,6 +7,7 @@ import {
   handleAddUserToRoom,
   handleCreateRoom,
 } from '../controllers/roomController';
+import { handelCreateGame } from '../controllers/gameController';
 
 export const wsClients = new Set<WebSocket>();
 
@@ -42,7 +43,8 @@ export const messageHandler = (ws: WebSocket) => (rawData: WebSocket.RawData) =>
       }
       case 'add_user_to_room': {
         const dataFromClient = parseDataFromClient(message);
-        handleAddUserToRoom(ws, dataFromClient?.indexRoom);
+        const roomData = handleAddUserToRoom(ws, dataFromClient?.indexRoom);
+        handelCreateGame(roomData);
         broadcastUpdatedRoomInfo();
       }
     }

@@ -1,6 +1,6 @@
-import { v4 as uuidV4 } from 'uuid';
-import { User, UserNane } from './types';
 import WebSocket from 'ws';
+import { randomUUID } from 'node:crypto';
+import { User, UserNane } from './types';
 
 export const usersStore = new Map<UserNane, User>();
 export const currentUsers = new Map<WebSocket, string | null>();
@@ -8,9 +8,9 @@ export const currentUsers = new Map<WebSocket, string | null>();
 export const hasUser = (name: string) => usersStore.has(name);
 export const getUserId = (name: string) => usersStore.get(name)?.id;
 
-export const addUser = (name: string, password: string): User => {
-  const id = uuidV4();
-  const user = { id, name, password };
+export const addUser = (name: string, password: string, ws: WebSocket): User => {
+  const id = randomUUID();
+  const user = { id, name, password, client: ws };
   usersStore.set(name, user);
 
   return user;

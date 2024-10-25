@@ -5,7 +5,7 @@ import { sendToClient } from '../helpers';
 export const handleRegistration = (ws: WebSocket, data: { name: string; password: string }) => {
   const { name, password } = data;
   if (!hasUser(name)) {
-    const user = addUser(name, password);
+    const user = addUser(name, password, ws);
     currentUsers.set(ws, name);
     sendToClient(ws, {
       type: 'reg',

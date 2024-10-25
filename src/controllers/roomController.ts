@@ -1,10 +1,10 @@
 import WebSocket from 'ws';
-import { v4 as uuidV4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import { roomsStore } from '../store/roomStore';
 import { getCurrentUser } from '../store/userStore';
 
 export const getUpdatedRoomInfo = () => {
-  const roomsData = Array.from(roomsStore.values());
+  const roomsData = Array.from(roomsStore.values())?.filter((room) => room?.roomUsers?.length <= 1);
   return JSON.stringify({
     type: 'update_room',
     data: JSON.stringify(roomsData),
@@ -14,7 +14,7 @@ export const getUpdatedRoomInfo = () => {
 
 export const handleCreateRoom = (ws: WebSocket) => {
   const currentUser = getCurrentUser(ws);
-  const roomId = uuidV4();
+  const roomId = randomUUID();
   roomsStore.set(roomId, {
     roomId,
     roomUsers: [{ name: currentUser?.name!, index: currentUser?.id! }],
@@ -35,9 +35,9 @@ export const handleAddUserToRoom = (ws: WebSocket, roomId: string) => {
     console.error('User is already in room!');
     return;
   }
+  const roomUsers = [...room.roomUsers, { name: currentUser?.name!, index: currentUser?.id! }];
+  const newRoomData = { ...room, roomUsers };
+  roomsStore.set(roomId, newRoomData);
 
-  roomsStore.set(roomId, {
-    ...room,
-    roomUsers: [...room.roomUsers, { name: currentUser?.name!, index: currentUser?.id! }],
-  });
+  return newRoomData;
 };
