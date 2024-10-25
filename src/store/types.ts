@@ -1,4 +1,5 @@
 import { SessionId } from '../types';
+import { Ship } from './gameStore';
 
 export type UserId = string;
 export type UserNane = string;
@@ -20,12 +21,26 @@ export interface Room {
   roomUsers: RoomUsers[];
 }
 
+export type ShipType = 'small' | 'medium' | 'large' | 'huge';
+
+interface Position {
+  x: number;
+  y: number;
+}
+
+export interface ClientShipData {
+  position: Position;
+  direction: boolean;
+  type: ShipType;
+  length: number;
+}
+
 export type GameId = string | number;
 
 export interface Player {
-  usersId: UserId;
-  ships: null;
-  board: null;
+  userId: UserId;
+  ships: Ship[] | null;
+  board: Map<string, Ship> | null;
 }
 
 export interface Game {

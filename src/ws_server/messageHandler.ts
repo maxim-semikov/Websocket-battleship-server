@@ -7,7 +7,7 @@ import {
   handleAddUserToRoom,
   handleCreateRoom,
 } from '../controllers/roomController';
-import { handelCreateGame } from '../controllers/gameController';
+import { handelAddShips, handelCreateGame } from '../controllers/gameController';
 import { wsClients } from './wsClients';
 
 const broadcastToAllClients = (data: string) => {
@@ -45,6 +45,14 @@ export const messageHandler =
           handleAddUserToRoom(currentSessionId, dataFromClient?.indexRoom);
           handelCreateGame(dataFromClient?.indexRoom);
           broadcastUpdatedRoomInfo();
+          break;
+        }
+        case 'add_ships': {
+          const dataFromClient = parseDataFromClient(message);
+          const { gameId, ships, indexPlayer } = dataFromClient;
+          if (gameId && ships && indexPlayer) {
+            handelAddShips(gameId, ships, indexPlayer);
+          }
           break;
         }
       }
