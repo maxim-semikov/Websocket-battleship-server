@@ -2,6 +2,7 @@ import { v4 as uuidV4 } from 'uuid';
 import { User, UserId } from './types';
 
 export const usersStore = new Map<UserId, User>();
+export const currentUsers = new Map();
 
 export const hasUser = (name: string) => usersStore.has(name);
 export const getUserId = (name: string) => usersStore.get(name)?.id;

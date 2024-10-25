@@ -1,11 +1,12 @@
 import WebSocket from 'ws';
-import { addUser, getUserId, hasUser, isAuthenticateUser } from '../store/userStore';
+import { addUser, currentUsers, getUserId, hasUser, isAuthenticateUser } from '../store/userStore';
 import { sendToClient } from '../helpers';
 
 export const handleRegistration = (ws: WebSocket, data: { name: string; password: string }) => {
   const { name, password } = data;
   if (!hasUser(name)) {
     const user = addUser(name, password);
+    currentUsers.set(ws, name);
     sendToClient(ws, {
       type: 'reg',
       data: {
@@ -16,6 +17,7 @@ export const handleRegistration = (ws: WebSocket, data: { name: string; password
       },
     });
   } else if (isAuthenticateUser(name, password)) {
+    currentUsers.set(ws, name);
     sendToClient(ws, {
       type: 'reg',
       data: {
@@ -26,6 +28,7 @@ export const handleRegistration = (ws: WebSocket, data: { name: string; password
       },
     });
   } else {
+    currentUsers.set(ws, null);
     sendToClient(ws, {
       type: 'reg',
       data: {
