@@ -19,3 +19,17 @@ export interface Room {
   roomId: number | string;
   roomUsers: RoomUsers[];
 }
+
+export type GameId = string | number;
+
+export interface Player {
+  usersId: UserId;
+  ships: null;
+  board: null;
+}
+
+export interface Game {
+  gameId: GameId;
+  players: Player[];
+  currentPlayer: UserId | null;
+}
