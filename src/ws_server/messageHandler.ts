@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { Message } from '../types';
+import { Message, SessionId } from '../types';
 import { parseDataFromClient } from '../helpers';
 import { handleRegistration } from '../controllers/regController';
 import {
@@ -11,7 +11,7 @@ import { handelCreateGame } from '../controllers/gameController';
 import { wsClients } from './wsClients';
 
 const broadcastToAllClients = (data: string) => {
-  for (const client of wsClients) {
+  for (const client of wsClients.values()) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(data);
     }
@@ -22,33 +22,33 @@ const broadcastUpdatedRoomInfo = () => {
   broadcastToAllClients(getUpdatedRoomInfo());
 };
 
-export const messageHandler = (ws: WebSocket) => (rawData: WebSocket.RawData) => {
-  try {
-    wsClients.add(ws);
-    const message: Message = JSON.parse(rawData.toString());
-    console.log(`Received command "${message?.type}"`);
+export const messageHandler =
+  (ws: WebSocket, currentSessionId: SessionId) => (rawData: WebSocket.RawData) => {
+    try {
+      const message: Message = JSON.parse(rawData.toString());
+      console.log(`Received command "${message?.type}"`);
 
-    switch (message?.type) {
-      case 'reg': {
-        const dataFromClient = parseDataFromClient(message);
-        handleRegistration(ws, dataFromClient);
-        broadcastUpdatedRoomInfo();
-        break;
+      switch (message?.type) {
+        case 'reg': {
+          const dataFromClient = parseDataFromClient(message);
+          handleRegistration(ws, currentSessionId, dataFromClient);
+          broadcastUpdatedRoomInfo();
+          break;
+        }
+        case 'create_room': {
+          handleCreateRoom(currentSessionId);
+          broadcastUpdatedRoomInfo();
+          break;
+        }
+        case 'add_user_to_room': {
+          const dataFromClient = parseDataFromClient(message);
+          handleAddUserToRoom(currentSessionId, dataFromClient?.indexRoom);
+          handelCreateGame(dataFromClient?.indexRoom);
+          broadcastUpdatedRoomInfo();
+          break;
+        }
       }
-      case 'create_room': {
-        handleCreateRoom(ws);
-        broadcastUpdatedRoomInfo();
-        break;
-      }
-      case 'add_user_to_room': {
-        const dataFromClient = parseDataFromClient(message);
-        const roomData = handleAddUserToRoom(ws, dataFromClient?.indexRoom);
-        handelCreateGame(roomData);
-        broadcastUpdatedRoomInfo();
-        break;
-      }
+    } catch {
+      console.log('Something went wrong');
     }
-  } catch {
-    console.log('Something went wrong');
-  }
-};
+  };

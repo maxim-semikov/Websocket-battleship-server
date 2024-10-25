@@ -21,3 +21,5 @@ export interface Message<T = string> extends Command {
 }
 
 export type MessageToClient = Message<object>;
+
+export type SessionId = string;

@@ -1,3 +1,3 @@
 import WebSocket from 'ws';
 
-export const wsClients = new Set<WebSocket>();
+export const wsClients = new Map<string, WebSocket>();

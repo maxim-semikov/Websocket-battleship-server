@@ -1,27 +1,54 @@
-import WebSocket from 'ws';
-import { randomUUID } from 'node:crypto';
-import { User, UserNane } from './types';
+import { SessionId } from '../types';
+import { User, UserId } from './types';
 
-export const usersStore = new Map<UserNane, User>();
-export const currentUsers = new Map<WebSocket, string | null>();
+class UserStore {
+  private static instance: UserStore;
+  private value: Map<UserId, User>;
 
-export const hasUser = (name: string) => usersStore.has(name);
-export const getUserId = (name: string) => usersStore.get(name)?.id;
+  private constructor() {
+    this.value = new Map<UserId, User>();
+  }
 
-export const addUser = (name: string, password: string, ws: WebSocket): User => {
-  const id = randomUUID();
-  const user = { id, name, password, client: ws };
-  usersStore.set(name, user);
+  public static createStore(): UserStore {
+    if (!UserStore.instance) {
+      UserStore.instance = new UserStore();
+    }
+    return UserStore.instance;
+  }
 
-  return user;
-};
+  public getUserByName(name: string): User | undefined {
+    return Array.from(this.value.values()).find((user) => user.name === name);
+  }
 
-export const isAuthenticateUser = (name: string, password: string): boolean => {
-  const user = usersStore.get(name);
-  return user !== undefined && user.password === password;
-};
+  public getUserBySessionId(sessionId: SessionId): User | undefined {
+    return Array.from(this.value.values()).find((user) => user.sessionId === sessionId);
+  }
 
-export const getCurrentUser = (ws: WebSocket) => {
-  const currentUserName = currentUsers.get(ws);
-  return currentUserName ? usersStore.get(currentUserName) : null;
-};
+  public addUser(key: UserId, value: User): void {
+    this.value.set(key, value);
+  }
+
+  public getUser(key: UserId): User | undefined {
+    return this.value.get(key);
+  }
+
+  public hasUser(key: UserId): boolean {
+    return this.value.has(key);
+  }
+
+  public isAuthenticateUser(name: string, password: string): boolean {
+    const user = this.getUserByName(name);
+    return !!user && user.password === password;
+  }
+
+  public updateUserSessionId(name: string, sessionId: SessionId): UserId | undefined {
+    const user = this.getUserByName(name);
+    if (!user) {
+      return;
+    }
+    this.value.set(user.id, { ...user, sessionId });
+    return user?.id;
+  }
+}
+
+export const userStore = UserStore.createStore();

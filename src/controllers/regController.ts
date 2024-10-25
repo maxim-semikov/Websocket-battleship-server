@@ -1,12 +1,21 @@
+import { randomUUID } from 'node:crypto';
 import WebSocket from 'ws';
-import { addUser, currentUsers, getUserId, hasUser, isAuthenticateUser } from '../store/userStore';
 import { sendToClient } from '../helpers';
+import { userStore } from '../store';
+import { User } from '../store/types';
+import { SessionId } from '../types';
 
-export const handleRegistration = (ws: WebSocket, data: { name: string; password: string }) => {
+export const handleRegistration = (
+  ws: WebSocket,
+  sessionId: SessionId,
+  data: { name: string; password: string },
+) => {
   const { name, password } = data;
-  if (!hasUser(name)) {
-    const user = addUser(name, password, ws);
-    currentUsers.set(ws, name);
+  if (!userStore.getUserByName(name)) {
+    const id = randomUUID();
+    const user: User = { id, name, password, sessionId };
+    userStore.addUser(id, user);
+
     sendToClient(ws, {
       type: 'reg',
       data: {
@@ -16,19 +25,18 @@ export const handleRegistration = (ws: WebSocket, data: { name: string; password
         errorText: '',
       },
     });
-  } else if (isAuthenticateUser(name, password)) {
-    currentUsers.set(ws, name);
+  } else if (userStore.isAuthenticateUser(name, password)) {
+    const userId = userStore.updateUserSessionId(name, sessionId);
     sendToClient(ws, {
       type: 'reg',
       data: {
         name,
-        index: getUserId(name),
+        index: userId,
         error: false,
         errorText: '',
       },
     });
   } else {
-    currentUsers.set(ws, null);
     sendToClient(ws, {
       type: 'reg',
       data: {

@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+import { SessionId } from '../types';
 
 export type UserId = string;
 export type UserNane = string;
@@ -7,7 +7,7 @@ export interface User {
   id: UserId;
   name: UserNane;
   password: string;
-  client: WebSocket;
+  sessionId: SessionId;
 }
 
 export interface RoomUsers {
