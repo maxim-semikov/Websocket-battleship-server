@@ -153,7 +153,19 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
       status: attackStatus,
     },
   });
-  sendToAllGamePlayers(game, { type: 'turn', data: { currentPlayer: nextCurrentPlayer } });
+
+  const isGameFinished = opponentData?.ships?.every((ship) => ship.isSunk());
+
+  if (isGameFinished) {
+    sendToAllGamePlayers(game, {
+      type: 'finish',
+      data: {
+        winPlayer: attackerId,
+      },
+    });
+  } else {
+    sendToAllGamePlayers(game, { type: 'turn', data: { currentPlayer: nextCurrentPlayer } });
+  }
 };
 
 function sendToAllGamePlayers(game: Game, message: MessageToClient) {
