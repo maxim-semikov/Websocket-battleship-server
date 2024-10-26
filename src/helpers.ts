@@ -12,7 +12,7 @@ export const sendToClient = (ws: WebSocket, message: MessageToClient) => {
 export function placeShipOnMap(gameBoardMap: Map<string, Ship>, ship: Ship) {
   const { x, y } = ship.position;
   for (let i = 0; i < ship.length; i++) {
-    const key = ship.direction ? `${x + i}:${y}` : `${x}:${y + i}`;
+    const key = ship.direction ? `${x}:${y + i}` : `${x + i}:${y}`;
     gameBoardMap.set(key, ship);
   }
 }
