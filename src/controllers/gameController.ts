@@ -129,7 +129,12 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
   const attackKey = `${x}:${y}`;
   const ship = opponentData.board?.get(attackKey);
 
-  if (ship && ship.hit(x, y)) {
+  if (ship) {
+    const isHit = ship.hit(x, y);
+    if (!isHit) {
+      return;
+    }
+
     attackStatus = 'shot';
     if (ship.isSunk()) {
       attackStatus = 'killed';
