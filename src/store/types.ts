@@ -48,4 +48,11 @@ export interface Game {
   gameId: GameId;
   players: Player[];
   currentPlayer: UserId | null;
+  gameStatus: 'created' | 'inProgress' | 'complete';
+  winnerId?: UserId;
+}
+
+export interface Winner {
+  name: UserNane;
+  wins: number;
 }

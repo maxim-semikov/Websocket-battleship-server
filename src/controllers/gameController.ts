@@ -12,6 +12,7 @@ import {
   UserId,
 } from '../store/types';
 import { MessageToClient } from '../types';
+import { winnersStore } from '../store/winnersStore';
 
 export const handelCreateGame = (roomId: string) => {
   const room = roomsStore.get(roomId);
@@ -45,7 +46,7 @@ export const handelCreateGame = (roomId: string) => {
         }
       });
 
-      gameStore.set(gameId, { gameId, players, currentPlayer: null });
+      gameStore.set(gameId, { gameId, players, currentPlayer: null, gameStatus: 'created' });
     }
   }
 };
@@ -87,7 +88,7 @@ export const handelStartGame = (gameId: GameId) => {
   if (isAllPlayersAddShips) {
     const currentPlayerIndex = Math.floor(Math.random() * 2);
     const currentPlayer = game.players[currentPlayerIndex]?.userId!;
-    gameStore.set(gameId, { ...game, currentPlayer });
+    gameStore.set(gameId, { ...game, currentPlayer, gameStatus: 'inProgress' });
 
     game.players.forEach((player) => {
       const userData = userStore.getUser(player.userId)!;
@@ -143,8 +144,6 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
     nextCurrentPlayer = opponentData.userId;
   }
 
-  gameStore.set(gameId, { ...game, currentPlayer: nextCurrentPlayer });
-
   sendToAllGamePlayers(game, {
     type: 'attack',
     data: {
@@ -163,7 +162,18 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
         winPlayer: attackerId,
       },
     });
+    gameStore.set(gameId, { ...game, gameStatus: 'complete', winnerId: attackerId });
+
+    if (winnersStore.has(attackerId)) {
+      const winnerData = winnersStore.get(attackerId)!;
+      const wins = winnerData?.wins + 1;
+      winnersStore.set(attackerId, { ...winnerData, wins });
+    } else {
+      const winner = userStore.getUser(attackerId)!;
+      winnersStore.set(attackerId, { name: winner?.name, wins: 1 });
+    }
   } else {
+    gameStore.set(gameId, { ...game, currentPlayer: nextCurrentPlayer });
     sendToAllGamePlayers(game, { type: 'turn', data: { currentPlayer: nextCurrentPlayer } });
   }
 };

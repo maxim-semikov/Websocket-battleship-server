@@ -14,6 +14,8 @@ import {
   handelStartGame,
 } from '../controllers/gameController';
 import { wsClients } from './wsClients';
+import { gameStore } from '../store';
+import { winnersStore } from '../store/winnersStore';
 
 const broadcastToAllClients = (data: string) => {
   for (const client of wsClients.values()) {
@@ -27,6 +29,18 @@ const broadcastUpdatedRoomInfo = () => {
   broadcastToAllClients(getUpdatedRoomInfo());
 };
 
+const broadcastUpdateWinners = () => {
+  const winners = Array.from(winnersStore.values())?.sort(
+    (winner1, winner2) => winner2?.wins - winner1?.wins,
+  );
+  const data = JSON.stringify({
+    type: 'update_winners',
+    data: JSON.stringify(winners),
+    id: 0,
+  });
+  broadcastToAllClients(data);
+};
+
 export const messageHandler =
   (ws: WebSocket, currentSessionId: SessionId) => (rawData: WebSocket.RawData) => {
     try {
@@ -38,6 +52,7 @@ export const messageHandler =
           const dataFromClient = parseDataFromClient(message);
           handleRegistration(ws, currentSessionId, dataFromClient);
           broadcastUpdatedRoomInfo();
+          broadcastUpdateWinners();
           break;
         }
         case 'create_room': {
@@ -71,6 +86,10 @@ export const messageHandler =
           }
 
           handelAttack(gameId, { x, y }, indexPlayer);
+          const game = gameStore.get(gameId);
+          if (game && game.gameStatus === 'complete' && game.winnerId) {
+            broadcastUpdateWinners();
+          }
           break;
         }
       }
