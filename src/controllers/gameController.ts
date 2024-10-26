@@ -76,8 +76,13 @@ export const handelStartGame = (gameId: GameId) => {
   const isAllPlayersAddShips = game.players.every((player) => player.ships?.length);
 
   if (isAllPlayersAddShips) {
+    const currentPlayerIndex = Math.floor(Math.random() * 2);
+    const currentPlayer = game.players[currentPlayerIndex]?.userId!;
+    gameStore.set(gameId, { ...game, currentPlayer });
+
     game.players.forEach((player) => {
       const userData = userStore.getUser(player.userId)!;
+
       const ws = wsClients.get(userData?.sessionId)!;
       sendToClient(ws, {
         type: 'start_game',
@@ -92,6 +97,7 @@ export const handelStartGame = (gameId: GameId) => {
           })),
         },
       });
+      sendToClient(ws, { type: 'turn', data: { currentPlayer } });
     });
   }
 };
