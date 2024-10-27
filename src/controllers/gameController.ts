@@ -305,7 +305,7 @@ export const handelSingleGameAttack = (game: Game, shotPosition: Position, attac
       data: {
         position: shotPosition,
         currentPlayer: attackerId,
-        status: 'miss',
+        status: !ship ? 'miss' : !ship.hit(x, y) && ship.isSunk() ? 'killed' : 'shot',
       },
     });
     sendToAllGamePlayers(game, { type: 'turn', data: { currentPlayer: botId } });
