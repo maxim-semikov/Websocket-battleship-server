@@ -28,6 +28,7 @@ const broadcastToAllClients = (data: string) => {
 
 const broadcastUpdatedRoomInfo = () => {
   broadcastToAllClients(getUpdatedRoomInfo());
+  console.log('Sent "update_room" command');
 };
 
 const broadcastUpdateWinners = () => {
@@ -40,6 +41,7 @@ const broadcastUpdateWinners = () => {
     id: 0,
   });
   broadcastToAllClients(data);
+  console.log('Sent "update_winners" command');
 };
 
 export const messageHandler =

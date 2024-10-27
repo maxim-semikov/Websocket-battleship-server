@@ -23,6 +23,7 @@ export const handleCreateRoom = (sessionId: SessionId) => {
     roomId,
     roomUsers: [{ name: currentUser?.name, index: currentUser?.id }],
   });
+  console.log(`Room ${roomId} was created`);
 };
 
 export const handleAddUserToRoom = (sessionId: SessionId, roomId: string) => {
@@ -43,4 +44,5 @@ export const handleAddUserToRoom = (sessionId: SessionId, roomId: string) => {
   const roomUsers = [...room.roomUsers, { name: currentUser?.name!, index: currentUser?.id! }];
   const newRoomData = { ...room, roomUsers };
   roomsStore.set(roomId, newRoomData);
+  console.log(`User ${currentUser?.name} was added to room ${roomId}`);
 };

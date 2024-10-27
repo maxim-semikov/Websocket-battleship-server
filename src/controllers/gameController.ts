@@ -47,6 +47,7 @@ export const handelCreateGame = (roomId: string) => {
       });
 
       gameStore.set(gameId, { gameId, players, currentPlayer: null, gameStatus: 'created' });
+      console.log(`The game was created: ${gameId}`);
     }
   }
 };
@@ -75,6 +76,7 @@ export const handelAddShips = (gameId: GameId, shipsData: ClientShipData[], user
     ...game,
     players: game.players.map((player) => (player?.userId === userId ? currentPlayerData : player)),
   });
+  console.log(`User's ships was added to the game store. Game id: ${gameId}`);
 };
 
 export const handelStartGame = (gameId: GameId) => {
@@ -108,6 +110,7 @@ export const handelStartGame = (gameId: GameId) => {
         },
       });
       sendToClient(ws, { type: 'turn', data: { currentPlayer } });
+      console.log(`The game ${gameId} was started. Current player: ${currentPlayer}`);
     });
   }
 };
@@ -156,6 +159,7 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
     nextCurrentPlayer = opponentData.userId;
   }
 
+  console.log(`Game ${gameId}: The command result is ${attackStatus}`);
   sendToAllGamePlayers(game, {
     type: 'attack',
     data: {
@@ -175,6 +179,8 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
       },
     });
     gameStore.set(gameId, { ...game, gameStatus: 'complete', winnerId: attackerId });
+
+    console.log(`Game ${gameId} finished. Winner: ${attackerId} `);
 
     if (winnersStore.has(attackerId)) {
       const winnerData = winnersStore.get(attackerId)!;
