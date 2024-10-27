@@ -19,6 +19,7 @@ export const webSocketServer = () => {
 
     ws.on('message', messageHandler(ws, currentSessionId));
 
+    ws.on('error', console.error);
     ws.on('close', () => {
       wsClients.delete(currentSessionId);
       console.warn(`Client with session id: ${currentSessionId} was disconnected`);
