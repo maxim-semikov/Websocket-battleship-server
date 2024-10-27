@@ -1,5 +1,5 @@
 import { gameStore, roomsStore, Ship, userStore } from '../store';
-import { placeShipOnMap, sendToClient } from '../helpers';
+import { getSurroundingCoordinates, placeShipOnMap, sendToClient } from '../helpers';
 import { wsClients } from '../ws_server/wsClients';
 import { randomUUID } from 'node:crypto';
 import {
@@ -139,6 +139,18 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
     attackStatus = 'shot';
     if (ship.isSunk()) {
       attackStatus = 'killed';
+
+      const shipSurroundingCoordinates = getSurroundingCoordinates(ship);
+      shipSurroundingCoordinates.forEach((coordinate) => {
+        sendToAllGamePlayers(game, {
+          type: 'attack',
+          data: {
+            position: coordinate,
+            currentPlayer: attackerId,
+            status: 'miss',
+          },
+        });
+      });
     }
   } else {
     nextCurrentPlayer = opponentData.userId;

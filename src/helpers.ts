@@ -23,3 +23,41 @@ export function generateRandomShotPositions(): Position {
   const y = Math.floor(Math.random() * 10);
   return { x, y };
 }
+
+export function getSurroundingCoordinates(ship: Ship): Position[] {
+  const surroundCoords = new Map<string, Position>();
+
+  const { position, length, direction } = ship;
+
+  const shipCoords: Position[] = [];
+  for (let i = 0; i < length; i++) {
+    const coordinate = direction
+      ? { x: position.x, y: position.y + i }
+      : { x: position.x + i, y: position.y };
+    shipCoords.push(coordinate);
+  }
+
+  shipCoords.forEach((position) => {
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const newX = position.x + dx;
+        const newY = position.y + dy;
+
+        if (
+          newX >= 0 &&
+          newX < 10 &&
+          newY >= 0 &&
+          newY < 10 &&
+          !shipCoords.some((shipPosition) => shipPosition.x === newX && shipPosition.y === newY)
+        ) {
+          const key = `${newX}:${newY}`;
+          if (!surroundCoords.has(key)) {
+            surroundCoords.set(key, { x: newX, y: newY });
+          }
+        }
+      }
+    }
+  });
+
+  return Array.from(surroundCoords.values());
+}
