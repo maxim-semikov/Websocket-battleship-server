@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 import { Message, SessionId } from '../types';
-import { parseDataFromClient } from '../helpers';
+import { generateRandomShotPositions, parseDataFromClient } from '../helpers';
 import { handleRegistration } from '../controllers/regController';
 import {
   getUpdatedRoomInfo,
@@ -16,6 +16,7 @@ import {
 import { wsClients } from './wsClients';
 import { gameStore } from '../store';
 import { winnersStore } from '../store/winnersStore';
+import { Position } from '../store/types';
 
 const broadcastToAllClients = (data: string) => {
   for (const client of wsClients.values()) {
@@ -78,14 +79,21 @@ export const messageHandler =
           handelStartGame(gameId);
           break;
         }
-        case 'attack': {
+        case 'attack':
+        case 'randomAttack': {
           const dataFromClient = parseDataFromClient(message);
           const { gameId, x = 0, y = 0, indexPlayer } = dataFromClient;
           if (!gameId || !indexPlayer) {
             break;
           }
 
-          handelAttack(gameId, { x, y }, indexPlayer);
+          let positions: Position = { x, y };
+          if (message?.type === 'randomAttack') {
+            positions = generateRandomShotPositions();
+          }
+
+          handelAttack(gameId, positions, indexPlayer);
+
           const game = gameStore.get(gameId);
           if (game && game.gameStatus === 'complete' && game.winnerId) {
             broadcastUpdateWinners();
