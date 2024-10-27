@@ -1,19 +1,33 @@
 {
     "name": "ws_task",
     "version": "1.0.0",
-    "description": "Template for the WebSocket remote control task",
-    "main": "index.js",
-    "type": "module",
+    "description": "RSSchool NodeJS - the WebSocket battleship server",
+    "main": "index.ts",
     "scripts": {
-        "start": "node ./index.js",
-        "start:dev": "nodemon ./index.js",
+        "start": "ts-node ./index.ts",
+        "start:dev": "ts-node-dev --respawn --transpile-only ./index.ts",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
-    "author": "Andrei Auchynnikau",
+    "author": "Maxim Semikov",
     "keywords": [],
     "license": "ISC",
     "devDependencies": {
-        "nodemon": "^2.0.16"
+        "@types/node": "^22.7.7",
+        "@types/uuid": "^10.0.0",
+        "@types/ws": "^8.5.12",
+        "@typescript-eslint/eslint-plugin": "^5.60.0",
+        "@typescript-eslint/parser": "^5.60.0",
+        "eslint": "^8.43.0",
+        "eslint-config-prettier": "^8.8.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "prettier": "^2.8.8",
+        "ts-loader": "^9.5.1",
+        "ts-node": "^10.9.2",
+        "ts-node-dev": "^2.0.0",
+        "tsconfig-paths": "^4.2.0",
+        "typescript": "^5.6.3",
+        "webpack": "^5.95.0",
+        "webpack-cli": "^5.1.4"
     },
     "dependencies": {
         "ws": "^8.8.0"
