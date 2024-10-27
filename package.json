@@ -4,7 +4,7 @@
     "description": "RSSchool NodeJS - the WebSocket battleship server",
     "main": "index.ts",
     "scripts": {
-        "start": "node index.ts",
+        "start": "ts-node ./index.ts",
         "start:dev": "ts-node-dev --respawn --transpile-only ./index.ts",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
