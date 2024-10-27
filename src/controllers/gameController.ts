@@ -11,8 +11,9 @@ import {
   Position,
   UserId,
 } from '../store/types';
-import { MessageToClient } from '../types';
+import { MessageToClient, SessionId } from '../types';
 import { winnersStore } from '../store/winnersStore';
+import { BattleBot } from '../BattleBot/battleBot';
 
 export const handelCreateGame = (roomId: string) => {
   const room = roomsStore.get(roomId);
@@ -46,10 +47,47 @@ export const handelCreateGame = (roomId: string) => {
         }
       });
 
-      gameStore.set(gameId, { gameId, players, currentPlayer: null, gameStatus: 'created' });
+      gameStore.set(gameId, {
+        gameId,
+        bot: null,
+        players,
+        currentPlayer: null,
+        gameStatus: 'created',
+      });
       console.log(`The game was created: ${gameId}`);
     }
   }
+};
+
+export const handelCreateSingleGame = (sessionId: SessionId) => {
+  const gameId = randomUUID();
+  const currentUser = userStore.getUserBySessionId(sessionId)!;
+  const ws = wsClients.get(sessionId)!;
+
+  sendToClient(ws, {
+    type: 'create_game',
+    data: {
+      idGame: gameId,
+      idPlayer: currentUser.id,
+    },
+  });
+
+  const bot = new BattleBot();
+  gameStore.set(gameId, {
+    gameId,
+    bot,
+    players: [
+      {
+        userId: currentUser.id,
+        ships: null,
+        board: null,
+      },
+    ],
+    currentPlayer: null,
+    gameStatus: 'created',
+  });
+
+  console.log(`The single game was created: ${gameId}`);
 };
 
 export const handelAddShips = (gameId: GameId, shipsData: ClientShipData[], userId: UserId) => {
@@ -89,7 +127,7 @@ export const handelStartGame = (gameId: GameId) => {
 
   if (isAllPlayersAddShips) {
     const currentPlayerIndex = Math.floor(Math.random() * 2);
-    const currentPlayer = game.players[currentPlayerIndex]?.userId!;
+    const currentPlayer = game.players[currentPlayerIndex]?.userId || game.players[0]?.userId!;
     gameStore.set(gameId, { ...game, currentPlayer, gameStatus: 'inProgress' });
 
     game.players.forEach((player) => {
@@ -126,9 +164,22 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
     return;
   }
 
+  if (game.bot) {
+    handelSingleGameAttack(game, shotPosition, attackerId);
+  } else {
+    handelMultiplayerModeAttack(game, shotPosition, attackerId);
+  }
+};
+
+export const handelMultiplayerModeAttack = (
+  game: Game,
+  shotPosition: Position,
+  attackerId: UserId,
+) => {
   let nextCurrentPlayer: UserId = attackerId;
   let attackStatus: AttackStatus = 'miss';
   const opponentData = game.players.find((player) => player.userId !== attackerId)!;
+  const { gameId } = game;
   const { x, y } = shotPosition;
   const attackKey = `${x}:${y}`;
   const ship = opponentData.board?.get(attackKey);
@@ -193,6 +244,135 @@ export const handelAttack = (gameId: GameId, shotPosition: Position, attackerId:
   } else {
     gameStore.set(gameId, { ...game, currentPlayer: nextCurrentPlayer });
     sendToAllGamePlayers(game, { type: 'turn', data: { currentPlayer: nextCurrentPlayer } });
+  }
+};
+
+export const handelSingleGameAttack = (game: Game, shotPosition: Position, attackerId: UserId) => {
+  const battleBot = game?.bot;
+  if (!battleBot) {
+    console.error('The bot has not been created! Game id: ', game.gameId);
+    return;
+  }
+
+  const { gameId } = game;
+  const { x, y } = shotPosition;
+  const attackKey = `${x}:${y}`;
+  const ship = battleBot.board?.get(attackKey);
+
+  if (ship && ship.hit(x, y)) {
+    let attackStatus: AttackStatus = 'shot';
+    if (ship.isSunk()) {
+      attackStatus = 'killed';
+
+      const shipSurroundingCoordinates = getSurroundingCoordinates(ship);
+      shipSurroundingCoordinates.forEach((coordinate) => {
+        sendToAllGamePlayers(game, {
+          type: 'attack',
+          data: {
+            position: coordinate,
+            currentPlayer: attackerId,
+            status: 'miss',
+          },
+        });
+      });
+    }
+
+    sendToAllGamePlayers(game, {
+      type: 'attack',
+      data: {
+        position: shotPosition,
+        currentPlayer: attackerId,
+        status: attackStatus,
+      },
+    });
+    const isPlayerWin = game.bot?.ships?.every((ship) => ship.isSunk());
+    if (isPlayerWin) {
+      sendToAllGamePlayers(game, {
+        type: 'finish',
+        data: {
+          winPlayer: attackerId,
+        },
+      });
+      gameStore.set(gameId, { ...game, gameStatus: 'complete', winnerId: attackerId });
+
+      console.log(`Game ${gameId} finished. Winner: ${attackerId} `);
+    }
+  } else {
+    const botId = 'BattleBotId';
+
+    sendToAllGamePlayers(game, {
+      type: 'attack',
+      data: {
+        position: shotPosition,
+        currentPlayer: attackerId,
+        status: 'miss',
+      },
+    });
+    sendToAllGamePlayers(game, { type: 'turn', data: { currentPlayer: botId } });
+
+    const playerData = game.players[0]!;
+    let battleBotTurn = true;
+    let battleBotShotPosition: Position;
+
+    while (battleBotTurn) {
+      battleBotShotPosition = battleBot.generateRandomShot();
+      const shotKey = `${battleBotShotPosition.x}:${battleBotShotPosition.y}`;
+      const ship = playerData.board?.get(shotKey);
+
+      if (ship && ship.hit(battleBotShotPosition.x, battleBotShotPosition.y)) {
+        let attackStatus: AttackStatus = 'shot';
+        if (ship.isSunk()) {
+          attackStatus = 'killed';
+
+          const shipSurroundingCoordinates = getSurroundingCoordinates(ship);
+          shipSurroundingCoordinates.forEach((coordinate) => {
+            sendToAllGamePlayers(game, {
+              type: 'attack',
+              data: {
+                position: coordinate,
+                currentPlayer: botId,
+                status: 'miss',
+              },
+            });
+            battleBot.recordShotResult(coordinate, 'miss');
+          });
+        }
+        sendToAllGamePlayers(game, {
+          type: 'attack',
+          data: {
+            position: battleBotShotPosition,
+            currentPlayer: botId,
+            status: attackStatus,
+          },
+        });
+        battleBot.recordShotResult(battleBotShotPosition, attackStatus);
+
+        const isBotWin = playerData.ships?.every((ship) => ship.isSunk());
+        if (isBotWin) {
+          sendToAllGamePlayers(game, {
+            type: 'finish',
+            data: {
+              winPlayer: botId,
+            },
+          });
+          gameStore.set(gameId, { ...game, gameStatus: 'complete', winnerId: 'BattleBot' });
+
+          console.log(`Game ${gameId} finished. Winner: BattleBot`);
+        }
+      } else {
+        sendToAllGamePlayers(game, {
+          type: 'attack',
+          data: {
+            position: battleBotShotPosition,
+            currentPlayer: botId,
+            status: 'miss',
+          },
+        });
+        battleBot.recordShotResult(battleBotShotPosition, 'miss');
+        sendToAllGamePlayers(game, { type: 'turn', data: { currentPlayer: attackerId } });
+        battleBotTurn = false;
+      }
+    }
   }
 };
 

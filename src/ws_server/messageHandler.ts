@@ -11,6 +11,7 @@ import {
   handelAddShips,
   handelAttack,
   handelCreateGame,
+  handelCreateSingleGame,
   handelStartGame,
 } from '../controllers/gameController';
 import { wsClients } from './wsClients';
@@ -96,10 +97,18 @@ export const messageHandler =
 
           handelAttack(gameId, positions, indexPlayer);
 
-          const game = gameStore.get(gameId);
-          if (game && game.gameStatus === 'complete' && game.winnerId) {
+          const gameStateAfterAttack = gameStore.get(gameId);
+          if (
+            gameStateAfterAttack &&
+            gameStateAfterAttack.gameStatus === 'complete' &&
+            gameStateAfterAttack.winnerId
+          ) {
             broadcastUpdateWinners();
           }
+          break;
+        }
+        case 'single_play': {
+          handelCreateSingleGame(currentSessionId);
           break;
         }
       }

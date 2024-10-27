@@ -1,5 +1,6 @@
 import { SessionId } from '../types';
 import { Ship } from './gameStore';
+import { BattleBot } from '../BattleBot/battleBot';
 
 export type UserId = string;
 export type UserNane = string;
@@ -47,6 +48,7 @@ export interface Player {
 export interface Game {
   gameId: GameId;
   players: Player[];
+  bot: BattleBot | null;
   currentPlayer: UserId | null;
   gameStatus: 'created' | 'inProgress' | 'complete';
   winnerId?: UserId;
