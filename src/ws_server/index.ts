@@ -13,9 +13,16 @@ export const webSocketServer = () => {
 
   wss.on('connection', (ws) => {
     const currentSessionId: SessionId = randomUUID() + '-' + new Date().getTime().toString();
+    console.warn('New client connected. Session id: ', currentSessionId);
+
     wsClients.set(currentSessionId, ws);
 
     ws.on('message', messageHandler(ws, currentSessionId));
+
+    ws.on('close', () => {
+      wsClients.delete(currentSessionId);
+      console.warn(`Client with session id: ${currentSessionId} was disconnected`);
+    });
   });
 
   console.log('Start websocket on port ', WS_PORT);
