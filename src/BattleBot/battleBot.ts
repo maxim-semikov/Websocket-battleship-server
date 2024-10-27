@@ -13,7 +13,8 @@ export class BattleBot {
     this.board = new Map();
 
     //todo: it's a temporary solution. In the future it will be necessary to make the ships to be randomised
-    this.ships = shipsData.map((shipData) => {
+    const shipsIndex = Math.floor(Math.random() * 5);
+    this.ships = shipsData[shipsIndex]!.map((shipData) => {
       const ship = new Ship(shipData);
       placeShipOnMap(this.board, ship);
       return ship;
